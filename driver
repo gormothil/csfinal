@@ -1,1 +1,1053 @@
+//name: Erik Winston   date:07/24/20
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
+import java.util.Scanner;   
+import java.awt.image.*;	 
+import javax.swing.JOptionPane;
+
+public class Final_Project_Sharp_Winston
+{
+   public static void main(String[] args)
+   {
+      JFrame frame = new JFrame("GAME NAME");
+      frame.setSize(800, 600);
+      frame.setLocation(0, 0);
+      frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+      frame.setContentPane(new Panel());
+      frame.setVisible(true);
+   
+      start();
+   }
+   
+   public static void start()
+   {
+      Location location = new Location();
+      Player player = new Player();
+      NPC npc = new NPC();                   
+      Vendor vendor = new Vendor();             
+      Enemy enemy = new Enemy(); 
+      
+      location.setLocation(101);            
+      location.draw();                      
+      player.draw();    
+                                 
+      String playerName = JOptionPane.showInputDialog("Player's name");  
+   }
+ 
+   public static void respawn(Location location, Player player)
+   {
+      location.setLocation(101);
+      location.draw();
+      
+      player.draw();
+      player.setHealth(player.getMaxHealth());
+      player.setCoins(player.getCoins() - 30);
+      
+      if (player.getCoins() < 0)
+      {
+         player.setCoins(0);
+      }
+   }
+   
+   public static class Panel extends JPanel
+   {
+      TopPanel topPanel;
+      GamePanel gamePanel;
+      BottomPanel bottomPanel;
+      
+      public Panel()
+      {
+         setLayout(new BorderLayout());
+         
+         topPanel = new TopPanel();
+         add(topPanel, BorderLayout.NORTH);
+      
+         gamePanel = new GamePanel();
+         add(gamePanel, BorderLayout.CENTER);
+      
+         bottomPanel = new BottomPanel();
+         add(bottomPanel, BorderLayout.SOUTH);
+      }
+   }
+      
+   public static class TopPanel extends JPanel
+   {
+      JLabel[] topOutput;
+      Player player;
+      Location location;
+      
+      public TopPanel()
+      {
+         setLayout(new GridLayout(1, 4));
+         
+         topOutput = new JLabel[4];
+         
+         for(int k = 0; k < 4; k++)
+         {
+            topOutput[k] = new JLabel("", SwingConstants.CENTER);
+            topOutput[k].setFont(new Font("Serif", Font.BOLD, 50));
+            add(topOutput[k]);
+         }
+      } 
+      
+      public void update()
+      {
+         topOutput[1].setText("Health: " + player.getHealth() + " / " +player.getMaxHealth());
+         topOutput[2].setText("Damage: " + player.getDamage());
+         topOutput[3].setText("Location: " + location.getLocation());
+         topOutput[4].setText("Coins: " + player.getCoins());
+      }
+   }
+   
+   public static class GamePanel extends JPanel
+   {           
+      BufferedImage myImage;
+      Graphics myBuffer;
+      Ball[] ballArray;
+      PlayerAvatar playerAvatar;     
+      Timer t;
+      
+      public GamePanel()
+      {
+         myImage =  new BufferedImage(800, 600, BufferedImage.TYPE_INT_RGB);
+         myBuffer = myImage.getGraphics();
+         
+         t = new Timer(10, new TimerListener());
+         
+         playerAvatar = new PlayerAvatar(200.0, 200.0, 30, Color.RED);
+         ballArray = new Ball[20];
+         for (int k = 0; k < 20; k++)
+         {
+            ballArray[k] = new Ball(189, 247, 60.0, Color.BLACK);
+         }
+      
+         addKeyListener(new Keyboard());
+         setFocusable(true);
+      }
+      
+      public class TimerListener implements ActionListener
+      {
+         Enemy enemy;
+         Player player;
+         TopPanel topPanel;
+         int count = 0;
+            
+         public void actionPerformed(ActionEvent e)
+         {
+            myBuffer.setColor(Color.WHITE);
+            myBuffer.fillRect(10, 10, 790, 590);
+            myBuffer.setColor(Color.BLACK);
+            myBuffer.fillRect(0, 0, 800, 600);
+            
+            for (int k = 0; k < enemy.getProjectiles(); k++)
+            {
+               ballArray[k].move(800, 600);
+               collide(ballArray[k], playerAvatar, player, enemy);
+               ballArray[k].draw(myBuffer);
+            }
+            
+            playerAvatar.draw(myBuffer);
+            myBuffer.setColor(Color.BLACK);
+            repaint();
+            
+            if (count == 200)
+            {
+               enemy.setHealth(enemy.getHealth() - player.getDamage());
+               count = 0;
+            }
+            count++;
+         
+            topPanel.update();
+            
+         }
+      }
+             
+      private static class Keyboard extends KeyAdapter
+      {
+         Location location;
+         BottomPanel bottomPanel;
+         PlayerAvatar playerAvatar;
+         TopPanel topPanel;
+         Player player;
+      
+         public void keyPressed(KeyEvent e)
+         {
+            if(e.getKeyCode() == KeyEvent.VK_UP && playerAvatar.getY() > 15)
+               playerAvatar.setY(playerAvatar.getY()-15 );
+            if(e.getKeyCode() == KeyEvent.VK_DOWN && playerAvatar.getY() < 585)
+               playerAvatar.setY(playerAvatar.getY()+15 );
+            if(e.getKeyCode() == KeyEvent.VK_LEFT && playerAvatar.getX() > 15)
+               playerAvatar.setX(playerAvatar.getX()-15 );
+            if(e.getKeyCode() == KeyEvent.VK_RIGHT && playerAvatar.getX() < 785)
+               playerAvatar.setX(playerAvatar.getX()+15 );
+               
+            if(e.getKeyCode() == KeyEvent.VK_E)
+               menu(bottomPanel, location, topPanel, player);          
+         }
+      }
+   }
+   
+   
+   public static class BottomPanel extends JPanel
+   {
+      JLabel bottomLabel;
+   
+      public BottomPanel()
+      {
+         bottomLabel = new JLabel("");
+      }
+      
+      public void update(String s)
+      {
+         bottomLabel.setText(s);
+      }
+   }
+   
+   public static abstract class Person
+   {
+      int health;
+   
+      public Person()
+      {
+         health = 10;
+      }
+   
+      public void setHealth(int x)
+      {
+         health = x;
+      }
+   
+      public int getHealth()
+      {
+         return health;
+      }
+   }
+
+   public static class Player extends Person
+   {
+      int coins;
+      int karma;
+      int damage;
+      int maxHealth;
+      TopPanel topPanel;
+   
+      public Player()
+      {
+         coins = 100;
+         karma = 50;
+         damage = 3;
+         maxHealth = 10;
+      }
+      
+      public void setCoins(int x)
+      {
+         coins = x;
+         topPanel.update();
+      }
+              
+      public void setKarma(int x)
+      {
+         karma = x;
+      }
+      
+      public void setDamage(int x)
+      {
+         damage = x;
+      }
+      
+      public void setMaxHealth(int x)
+      {
+         maxHealth = x;
+      }
+      
+      public int getCoins()
+      {
+         return coins;
+      }
+      
+      public int getKarma()
+      {
+         return karma;
+      }
+      
+      public int getDamage()
+      {
+         return damage;
+      }
+      
+      public int getMaxHealth()
+      {
+         return maxHealth;
+      }
+      
+      public void draw()
+      {
+      
+      }
+   }
+
+   public static class NPC extends Person
+   {
+      String name;
+      String speech;
+      String choice1;
+      String choice2;
+      int reward;
+      int decision;
+      public NPC()
+      {
+         name = "";
+         speech = "";
+         choice1 = "";
+         choice2 = "";
+         reward = 0;
+         decision = 0;
+      }
+      
+      public void setNPC(int x) throws Exception
+      {
+         Scanner infile = new Scanner( new File("npc.txt") );
+         while (x != Integer.parseInt(infile.next()))
+         {
+            infile.next();
+         }
+      
+         name = infile.next();
+         speech = infile.next();
+         reward = Integer.parseInt(infile.next());
+         choice1 = infile.next();
+         choice2 = infile.next();
+         
+         infile.close();
+      }
+      
+      public void setDecision (int x)
+      {
+         decision = x;
+      }
+      
+      public void setChoice1 (String x)
+      {
+         choice1 = x;
+      }
+      
+      public void setChoice2 (String x)
+      {
+         choice2 = x;
+      }
+      
+      public int getDecision()
+      {
+         return decision;
+      }
+      
+      public String getChoice1()
+      {
+         return choice1;
+      }
+      
+      public String getChoice2()
+      {
+         return choice2;
+      }
+      
+      public void talk(BottomPanel bottomPanel)
+      {
+         bottomPanel.update(speech);
+      }
+      
+      public void interact(Player player, BottomPanel bottomPanel)
+      {
+         do
+         {
+            decision = Integer.parseInt(JOptionPane.showInputDialog("1. " + choice1 + "\n2. " + choice2));
+            
+            if (decision == 1)
+            {
+               player.setCoins(player.getCoins() + reward);
+               player.setKarma(player.getKarma() + 10);
+            }
+            if (decision == 2)
+            {
+               player.setKarma(player.getKarma() - 10);
+            }
+            else
+            {
+               bottomPanel.update("Please enter an integer, 1 or 2");
+            }        
+         }while(decision != 1 && decision != 2);
+      
+      }
+      
+      public void draw()
+      {
+      
+      }
+   }
+
+   public static class Vendor extends NPC
+   {
+      String item;
+      int price;
+      int amount;
+      int vendorType;
+      
+      public Vendor()
+      {
+         name = "";
+         item = "";
+         reward = 0;
+         price = 0;
+         amount = 0;
+         vendorType = 0;
+      }
+      
+      public void setVendor(int x) throws Exception
+      {
+         Scanner infile = new Scanner( new File("vendor.txt") );
+         
+         while (x != Integer.parseInt(infile.next()))
+         {
+            infile.next();
+         }
+      
+         name = infile.next();
+         item = infile.next();
+         vendorType = Integer.parseInt(infile.next());
+         price = Integer.parseInt(infile.next());
+         amount = Integer.parseInt(infile.next());
+         
+         infile.close();
+      }
+      
+      public int getVendorType()
+      {
+         return vendorType;
+      }
+      
+      public void sellArmor (Player player, BottomPanel bottomPanel)
+      {
+         if (player.getKarma() > 40)
+         {
+            player.setMaxHealth(player.getMaxHealth() + amount);
+            player.setCoins(player.getCoins() - price);
+         
+            bottomPanel.update("Pleasure doing business with you");
+         }
+         else
+         {
+            bottomPanel.update("I refuse to sell to the likes of you!");
+         }
+      }
+      public void sellFood (Player a, BottomPanel b)
+      {
+         if (a.getKarma() > 40)
+         {
+            a.setHealth(a.getHealth() + amount);
+            a.setCoins(a.getCoins() - price);
+         
+            b.update("Pleasure doing business with you");
+         }
+         else
+         {
+            b.update( "I refuse to sell to the likes of you!");
+         }
+      }
+      public void sellWeapons (Player a, BottomPanel b)
+      {
+         if (a.getKarma() > 40)
+         {
+            a.setDamage(a.getDamage() + amount);
+            a.setCoins(a.getCoins() - price);
+         
+            b.update("Pleasure doing business with you");
+         }
+         else
+         {
+            b.update("I refuse to sell to the likes of you!");
+         }
+      }
+      public void sellKarma (Player a, BottomPanel b)
+      {
+         a.setKarma(a.getKarma() + amount);
+         a.setCoins(a.getCoins() - price);
+         
+         b.update("Pleasure doing business with you");
+      }
+      
+      public void talk(BottomPanel a)
+      {
+         a.update("Hello traveler, I am " + name + "and here you can buy " + item);
+      }
+      
+      public void draw()
+      {
+      
+      }
+   }
+   
+   public static class Enemy extends Person
+   {
+      int damage;
+      int projectiles;
+      double speed;
+      int reward;
+      String name;
+      String speech;
+      public Enemy()
+      {
+         damage = 0;
+         projectiles = 0;
+         speed = 0;
+         reward = 0;
+      }
+      
+      public void setEnemy(int x) throws Exception
+      {
+         Scanner infile = new Scanner( new File("enemy.txt") );
+         while (x != Integer.parseInt(infile.next()))
+         {
+            infile.next();
+         }
+      
+         name = infile.next();
+         speech = infile.next();
+         damage = Integer.parseInt(infile.next());
+         projectiles = Integer.parseInt(infile.next());
+         speed = Integer.parseInt(infile.next());
+         reward = Integer.parseInt(infile.next());
+         infile.close();
+      }
+      
+      public void setDamage(int x)
+      {
+         damage = x;
+      }
+      
+      public void setProjectiles(int x)
+      {
+         projectiles = x;
+      }
+      
+      public void setSpeed (double x)
+      {
+         speed = x;
+      }
+      
+      public void setReward(int x)
+      {
+         reward = x;
+      }
+      
+      public void setName (String s)
+      {
+         name = s;
+      }
+      
+      public void setSpeech (String s)
+      {
+         speech = s;
+      }
+       
+      public int getDamage()
+      {
+         return damage;
+      }
+      
+      public int getProjectiles()
+      {
+         return projectiles;
+      }
+      
+      public double getSpeed()
+      {
+         return speed;
+      }
+      
+      public int getReward()
+      {
+         return reward;
+      }
+      
+      public String getName()
+      {
+         return name;
+      }
+      
+      public String getSpeech()
+      {
+         return speech;
+      }
+      
+      public void draw()
+      {
+      
+      }
+   }
+
+   public static boolean winner(Player a, Enemy b)
+   {
+      if (a.getHealth() > 0 && b.getHealth() <= 0)
+      {
+         return true; 
+      }
+      else
+      {
+         return false;
+      }
+   }
+      
+   public static boolean dead(Player a)
+   {
+      if (a.getHealth() <= 0)
+      {
+         return true;
+      }
+      else 
+      {
+         return false;
+      }
+   }
+   
+   
+   public static void win(Graphics myBuffer)
+   {
+      myBuffer.setFont(new Font("Monospace", Font.BOLD, 25));
+      myBuffer.drawString("Congratulations", 400, 300);
+   }
+   
+   public static void die(Graphics myBuffer, Player player)
+   {
+      int highscore = 0;
+      myBuffer.setFont(new Font("Monospace", Font.BOLD, 25));
+      myBuffer.drawString("Rest In Peace", 400, 300);
+      if (player.getCoins() > highscore)
+      {
+         PrintWriter outfile = null;
+         try
+         {
+            outfile = new PrintWriter(new FileWriter("Highscore.txt"));
+         }
+         catch(Exception e)
+         {
+            JOptionPane.showMessageDialog(null,"The file could not be created.");
+         }
+        
+         outfile.println(player.getCoins());
+      
+      }
+   }
+
+   public static void fight(Enemy a, Ball[] b, Timer c, Location d, Player e, TopPanel topPanel, Graphics myBuffer)
+   {
+      for (int k = 0; k < 20; k++)
+      {
+         b[k].setdx(a.getSpeed());
+         b[k].setdy(a.getSpeed());
+      }
+      
+      for (int k = 0; k < a.getProjectiles(); k++)
+      {
+         b[k].activate();
+         b[k].setdx(a.getSpeed());
+         b[k].setdy(a.getSpeed());
+      }
+      
+      c.start();
+      
+      while (winner(e, a) != true && dead(e) != true)
+      {
+      }
+      
+      if (winner(e, a) == true)
+      {
+         win(myBuffer);
+         c.stop();
+         d.draw();
+         e.draw();
+         e.setCoins(e.getCoins() + a.getReward());
+      }
+      
+      if (dead(e) == true)
+      {
+         die(myBuffer, e);
+         c.stop();
+         respawn(d, e);
+      }
+      
+      for (int k = 0; k < a.getProjectiles(); k++)
+      {
+         b[k].deactivate();
+         b[k].setdx(a.getSpeed());
+         b[k].setdy(a.getSpeed());
+      }
+      topPanel.update();
+   
+   }
+
+   public static class PlayerAvatar
+   {
+      private double myX;   // x and y coordinates of center
+      private double myY;
+      private double myDiameter;
+      private Color myColor; 
+      private double myRadius;
+     // constructors
+      public PlayerAvatar()     //default constructor
+      {
+         myX = 200;
+         myY = 200;
+         myDiameter = 25;
+         myColor = Color.RED;
+         myRadius = myDiameter/2;
+      }
+      public PlayerAvatar(double x, double y, double d, Color c)
+      {
+         myX = x;
+         myY = y;
+         myDiameter = d;
+         myColor = c;
+         myRadius = d/2;
+      }
+    // accessor methods
+      public double getX() 
+      { 
+         return myX;
+      }
+      public double getY()      
+      { 
+         return myY;
+      }
+      public double getDiameter() 
+      { 
+         return myDiameter;
+      }
+      public Color getColor() 
+      { 
+         return myColor;
+      }
+      public double getRadius() 
+      { 
+         return myRadius;
+      }
+   // modifier methods
+      public void setX(double x)
+      {
+         myX = x;
+      } 
+      public void setY(double y)
+      {
+         myY = y;
+      } 
+      public void setColor(Color c)
+      {
+         myColor = c;
+      }
+      public void setDiameter(double d)
+      {
+         myDiameter = d;
+         myRadius = d/2;
+      }
+      public void setRadius(double r)
+      {
+         myRadius = r;
+         myDiameter = 2*r;
+      }
+    //	 instance methods
+      public void jump(int rightEdge, int bottomEdge)
+      {
+         // moves location to random (x, y) within the edges
+         myX = (Math.random()* (rightEdge-myDiameter) + myRadius);
+         myY = (Math.random()* (bottomEdge-myDiameter) + myRadius);
+      }
+      public void draw(Graphics myBuffer) 
+      {
+         myBuffer.setColor(myColor);
+         myBuffer.fillOval((int)(getX() - getRadius()), (int)(getY()-getRadius()), (int)getDiameter(), (int)getDiameter());
+      }
+   }
+
+   public static class Ball extends PlayerAvatar
+   {
+      double dx;       // pixels to move each time step() is called.
+      double dy;
+      int activated;
+    // constructors
+      public Ball()         //default constructor
+      {
+         super(200, 200, 50, Color.WHITE);
+         dx = Math.random() * 12 - 6;          // to move vertically
+         dy = Math.random() * 12 - 6;          // to move sideways
+         activated = 0;
+      }
+      public Ball(double x, double y, double dia, Color c)
+      {
+         super(x, y, dia, c);
+         dx = Math.random()* 12 - 6;
+         dy = Math.random() * 12 - 6;
+         activated = 0;
+      }
+      /*
+      public void draw(Graphics myBuffer) 
+      {
+         ImageIcon inputImage = new ImageIcon("fire2.png");
+         Image fire = inputImage.getImage().getScaledInstance(30, 30, Image.SCALE_DEFAULT);
+         ImageIcon finalimage = new ImageIcon(fire);
+         myBuffer.drawImage(finalimage.getImage(), (int)getX(),(int)getY(), null);
+      
+      }
+   */
+      
+     //modifier methods 
+      public void setdx(double x)        
+      {
+         dx = x;
+      }
+      public void setdy(double y)
+      {
+         dy = y;
+      }
+      
+             //accessor methods
+      public double getdx()             
+      {
+         return dx;
+      }
+      public double getdy()
+      {
+         return dy;
+      }
+      
+            //instance methods
+      public void move(double rightEdge, double bottomEdge)
+      {
+         setX(getX()+ dx);                  // move horizontally
+        
+         if(getX() >= rightEdge - getRadius())  //hit right edge
+         {
+            setX(rightEdge - getRadius());
+            dx = dx * -1; 
+         }
+        
+         setY(getY()+ dy);                 
+        
+         if(getY() >= bottomEdge - getRadius())  
+         {
+            setY(rightEdge - getRadius());
+            dy = dy * -1; 
+         }
+                        
+        
+         if(getX() <= 0 + getRadius())  
+         {
+            setX(0 + getRadius());
+            dx = dx * -1; 
+         }
+         
+        
+         if(getY() <= 0 + getRadius())  
+         {
+            setY(0 + getRadius());
+            dy = dy * -1; 
+         }
+      }
+      
+      public void activate()
+      {
+         activated = 1;
+      }
+      
+      public void deactivate()
+      {
+         activated = 0;
+      }
+      
+      public boolean isActivated()
+      {
+         return activated == 1;
+      }
+   }
+
+   public static void collide(Ball b, PlayerAvatar playerAvatar, Player c, Enemy e)
+   {
+      if (b.isActivated() == true)
+      {
+         double d = distance(b.getX(), b.getY(), playerAvatar.getX(), playerAvatar.getY());
+         if (d <= b.getDiameter() / 2.0 + playerAvatar.getDiameter() / 2.0) {
+            playerAvatar.jump(400, 400);
+            c.setHealth(c.getHealth() - e.getDamage());
+         }
+      }
+   }
+   
+   public static double distance(double x1, double y1, double x2, double y2)
+   {
+      return Math.sqrt(Math.pow(x1 - x2, 2.0) + Math.pow(y1 - y2, 2.0)) ;
+   }
+   
+   public static void menu(BottomPanel a, Location b, TopPanel topPanel, Player player)
+   {
+      int c;
+         
+      do
+      {
+         c = Integer.parseInt(JOptionPane.showInputDialog("1. Map\n2. Quit"));
+         if (c == 1)
+         {
+            map(b, a, topPanel);
+         }
+         
+         if (c == 2)
+         {
+            System.exit(0);
+         }
+            
+         else
+         {
+            a.update("Please enter an integer, 1 or 2");
+         }
+      }while (c != 1 && c!= 2);
+      topPanel.update();
+   }
+   
+   public static void map(Location location, BottomPanel bottomPanel, TopPanel topPanel)
+   {
+      int x;
+      do
+      {
+         x = Integer.parseInt(JOptionPane.showInputDialog("1. Tavern\n2. Cave\n3. Road\n4. local4\n5. local5\n6. local6"));
+         
+         if (x < 1 || x > 6)
+         {
+            bottomPanel.update("Please enter an integer between 1 and 6");
+         }
+            
+         else
+         {
+            int y = x + 100;
+            location.setLocation(y);
+         }
+      }while (x < 1 || x > 6);
+      topPanel.update();
+   }
+   
+
+   public static class Location
+   {
+      String locationName;
+      String locationDescription;
+      int locationEnemy;
+      int locationNPC;
+      int locationVendor;
+      JPanel Panel;
+      TopPanel topPanel;
+      BottomPanel bottomPanel;
+      Timer timer;
+      Ball[] ballArray;
+      Player player;
+      Enemy enemy;
+      Location location;
+      NPC npc;
+      Vendor vendor;
+      Graphics myBuffer;
+      
+      
+      public Location()
+      {
+         locationName = "";
+         locationDescription = "";
+         locationEnemy = 0;
+         locationNPC = 0;
+         locationVendor = 0;
+      }
+   
+      public void setLocation (int x)
+      {
+         try
+         {
+            Scanner infile = new Scanner(new File("location.txt") );
+         
+            while (x != Integer.parseInt(infile.next()))
+            {
+               infile.next();
+            }
+         
+            locationName = infile.next();
+            locationDescription = infile.next();
+            locationEnemy = Integer.parseInt(infile.next());
+            locationNPC = Integer.parseInt(infile.next());
+            locationVendor = Integer.parseInt(infile.next());
+         
+            bottomPanel.update(locationDescription);
+            enemy.setEnemy(locationEnemy);
+            npc.setNPC(locationNPC);
+            vendor.setVendor(locationVendor);
+         
+            if (locationEnemy != 0)
+            {
+               fight(enemy, ballArray, timer, location, player, topPanel, myBuffer);
+            }
+         
+            if (locationNPC != 0)
+            {
+               npc.talk(bottomPanel);
+               npc.interact(player, bottomPanel);
+            }
+         
+            if (locationVendor != 0)
+            {
+               vendor.talk(bottomPanel);
+            
+               if (vendor.getVendorType() == 1)
+               {
+                  vendor.sellArmor(player, bottomPanel);
+               }
+               if (vendor.getVendorType() == 2)
+               {
+                  vendor.sellFood(player, bottomPanel);
+               }
+               if (vendor.getVendorType() == 3)
+               {
+                  vendor.sellWeapons(player, bottomPanel);
+               }
+               if (vendor.getVendorType() == 4)
+               {
+                  vendor.sellKarma(player, bottomPanel);
+               }
+            }
+            topPanel.update();
+            infile.close();
+         }
+         catch(Exception r)
+         {
+            return;
+         }
+      }
+      
+      public void setDesciption (String a)
+      {
+         locationDescription = a;
+      }
+      
+      public void draw()
+      {
+      
+      }
+      
+      public String getLocation()
+      {
+         return locationName;
+      }
+      
+      public String getDescription()
+      {
+         return locationDescription;
+      }
+   }
+
+
+
+}
