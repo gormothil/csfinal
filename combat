@@ -1,0 +1,325 @@
+//Name:Addison Sharp   Date: 7/1/20
+
+// public class Driver17
+// {
+//    public static void main(String[] args)
+//    { 
+//       JFrame frame = new JFrame("Unit2, Lab17");
+//       frame.setSize(408, 438);    //makes the mouse location correct
+//       frame.setLocation(0, 0);
+//       frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//       PrizePanel p = new PrizePanel();
+//       frame.setContentPane(p);
+//       frame.setVisible(true);
+//       p.requestFocus();  //  new command to make the computer pay attention to the key presses.
+//    }
+   
+  /**************************************************************************************
+Copy all other files from Lab16.  Use the code in the packet as a model so that the arrow keys 
+move the polkadot ten pixels at a time.  Do not allow the keys to move the polkadot 
+outside the boundaries of the panel.
+*************************************************************************************/
+        //Name:Addison Sharp    Date:7/1/20
+
+/******************************************************************************
+Copy all files from Lab12.  Rename the driver as Lab16.  Set the JFrame's size 
+to (408, 438), which makes the mouse's location in the JFrame correspond to its 
+location in the JPanel.  Then add the new code from the packet to PrizePanel.   
+
+The mousePressed method must perform three different behaviors on MouseEvent e:
+
+left click           <none>	            moves the polkadot to where you clicked
+right click	         e.isMetaDown()       moves the ball to where you clicked
+Shift + left click	e.isShiftDown()	   randomly changes the speed and direction of the ball
+****************************************************************************************/
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.image.*;
+
+public class Driver172_Sharp
+{
+   public static class Polkadot
+   {
+      private double myX;   // x and y coordinates of center
+      private double myY;
+      private double myDiameter;
+      private Color myColor; 
+      private double myRadius;
+     // constructors
+      public Polkadot()     //default constructor
+      {
+         myX = 200;
+         myY = 200;
+         myDiameter = 25;
+         myColor = Color.RED;
+         myRadius = myDiameter/2;
+      }
+      public Polkadot(double x, double y, double d, Color c)
+      {
+         myX = x;
+         myY = y;
+         myDiameter = d;
+         myColor = c;
+         myRadius = d/2;
+      }
+    // accessor methods
+      public double getX() 
+      { 
+         return myX;
+      }
+      public double getY()      
+      { 
+         return myY;
+      }
+      public double getDiameter() 
+      { 
+         return myDiameter;
+      }
+      public Color getColor() 
+      { 
+         return myColor;
+      }
+      public double getRadius() 
+      { 
+         return myRadius;
+      }
+   // modifier methods
+      public void setX(double x)
+      {
+         myX = x;
+      } 
+      public void setY(double y)
+      {
+         myY = y;
+      } 
+      public void setColor(Color c)
+      {
+         myColor = c;
+      }
+      public void setDiameter(double d)
+      {
+         myDiameter = d;
+         myRadius = d/2;
+      }
+      public void setRadius(double r)
+      {
+         myRadius = r;
+         myDiameter = 2*r;
+      }
+    //	 instance methods
+      public void jump(int rightEdge, int bottomEdge)
+      {
+         // moves location to random (x, y) within the edges
+         myX = (Math.random()* (rightEdge-myDiameter) + myRadius);
+         myY = (Math.random()* (bottomEdge-myDiameter) + myRadius);
+      }
+      public void draw(Graphics myBuffer) 
+      {
+         myBuffer.setColor(myColor);
+         myBuffer.fillOval((int)(getX() - getRadius()), (int)(getY()-getRadius()), (int)getDiameter(), (int)getDiameter());
+      }
+   }
+
+   public static class Ball extends Polkadot
+   {
+      private double dx;       // pixels to move each time step() is called.
+      private double dy;
+    // constructors
+      public Ball()         //default constructor
+      {
+         super(200, 200, 50, Color.BLACK);
+         dx = Math.random() * 12 - 6;          // to move vertically
+         dy = Math.random() * 12 - 6;          // to move sideways
+      }
+      public Ball(double x, double y, double dia, Color c)
+      {
+         super(x, y, dia, c);
+         dx = 1;
+         dy = 1;
+      }
+      
+     //modifier methods 
+      public void setdx(double x)        
+      {
+         dx = x;
+      }
+      public void setdy(double y)
+      {
+         dy = y;
+      }
+      
+      //accessor methods
+      public double getdx()             
+      {
+         return dx;
+      }
+      public double getdy()
+      {
+         return dy;
+      }
+      
+      
+     //instance methods
+      public void draw(Graphics myBuffer) 
+      {
+         ImageIcon inputImage = new ImageIcon("fire2.png");
+         Image fire = inputImage.getImage().getScaledInstance(30, 30, Image.SCALE_DEFAULT);
+         ImageIcon finalimage = new ImageIcon(fire);
+         myBuffer.drawImage(finalimage.getImage(), (int)getX(),(int)getY(), null);
+      
+      }
+      public void move(double rightEdge, double bottomEdge)
+      {
+         setX(getX()+ dx);                  // move horizontally
+        
+         if(getX() >= rightEdge - getRadius())  //hit right edge
+         {
+            setX(rightEdge - getRadius());
+            dx = dx * -1; 
+         }
+         
+         if(getX() <= rightEdge - 400 + getRadius())  //hit right edge
+         {
+            setX(rightEdge -400 + getRadius());
+            dx = dx * -1; 
+         }
+         setY(getY()+dy);
+         if(getY() >= bottomEdge - getRadius())  //hit right edge
+         {
+            setY(bottomEdge - getRadius());
+            dy = dy * -1; 
+         }
+         if(getY() <= bottomEdge -400 + getRadius())  //hit right edge
+         {
+            setY(bottomEdge -400 + getRadius());
+            dy = dy * -1; 
+         }
+      
+         
+      }
+   }
+
+     
+     
+   public static void main(String[] args)
+   { 
+      
+      JFrame frame = new JFrame("Unit2, Lab17");
+      frame.setSize(408, 438);    //makes the mouse location correct
+      frame.setLocation(0, 0);
+      frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+      PrizePanel p = new PrizePanel();
+      frame.setContentPane(p);
+      frame.setVisible(true);
+      p.requestFocus();
+   }
+   
+   public static class PrizePanel extends JPanel
+   {
+      private static final int FRAME = 400;
+      private static final Color BACKGROUND = new Color(204, 204, 204);
+      private BufferedImage myImage;
+      private Graphics myBuffer;
+      private Ball ball;
+      private Polkadot pd;
+      private Timer t; 
+      private int hits = 2;
+   	//constructor   
+      public PrizePanel()
+      {
+         myImage = new BufferedImage(FRAME, FRAME, BufferedImage.TYPE_INT_RGB);
+         myBuffer = myImage.getGraphics();
+         myBuffer.setColor(BACKGROUND);
+         myBuffer.fillRect(0,0,FRAME, FRAME);
+         int xPos = (int)(Math.random()*(FRAME-100) + 50);
+         int yPos = (int)(Math.random()*(FRAME-100)+50);
+         
+         ball = new Ball(xPos, yPos, 50, Color.BLACK);
+         pd = new Polkadot(xPos, yPos, 20, Color.RED);
+         addKeyListener(new Key());
+         setFocusable(true);
+         t = new Timer(10, new Listener());
+         t.start();
+      
+         
+      }
+      public void paintComponent(Graphics g)
+      {
+         g.drawImage(myImage, 0 ,0,getWidth(), getHeight(), null);
+      }
+      private class Listener implements ActionListener
+      {
+         public void actionPerformed(ActionEvent e)
+         {
+            myBuffer.setColor(BACKGROUND);
+            myBuffer.fillRect(0,0,FRAME,FRAME);
+           
+            ball.move(FRAME,FRAME);
+            collide(ball, pd);
+           
+            ball.draw(myBuffer);
+            pd.draw(myBuffer);
+           
+            myBuffer.setColor(Color.BLACK);
+            myBuffer.setFont( new Font("Monospace", Font.BOLD, 24));
+            myBuffer.drawString("Health: " +hits, FRAME-150, 25);
+            if(hits<=0)
+         {
+         myBuffer.setFont( new Font("Monospace", Font.BOLD, 70));
+         myBuffer.drawString("YOU DIED", 25, 200);
+         //dead();
+         t.stop();
+         }
+            repaint();
+         }
+      }   
+      private class Key extends KeyAdapter
+      {
+         public void keyPressed(KeyEvent e)
+         {
+            if(pd.getY()>15)
+            {
+               if(e.getKeyCode() == KeyEvent.VK_UP)
+                  pd.setY( pd.getY() - 10);
+            }
+            if(pd.getY()<380)
+            {
+            
+               if(e.getKeyCode() == KeyEvent.VK_DOWN)
+                  pd.setY( pd.getY() + 10);
+            }
+            if(pd.getX()>15)
+            {
+               if(e.getKeyCode() == KeyEvent.VK_LEFT)
+                  pd.setX( pd.getX() - 10);
+            }
+            
+            if(pd.getX()<380)
+            {
+               if(e.getKeyCode() == KeyEvent.VK_RIGHT)
+                  pd.setX( pd.getX() + 10);
+            }
+         }
+      }
+      private void collide(Ball b, Polkadot pd)
+      {
+         double d = distance(b.getX(), b.getY(), pd.getX(), pd.getY());  
+         if (d <= b.getRadius() + pd.getRadius())
+         {
+            pd.jump(FRAME,FRAME);
+            hits--;
+         }
+        
+      }
+      private double distance(double x1, double y1, double x2, double y2)
+      {
+         return Math.sqrt(Math.pow(x1 - x2, 2)+Math.pow(y1-y2,2))  ;
+      }
+   }
+}
+
+
+
+   
