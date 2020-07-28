@@ -1,38 +1,5 @@
 //Name:Addison Sharp   Date: 7/1/20
 
-// public class Driver17
-// {
-//    public static void main(String[] args)
-//    { 
-//       JFrame frame = new JFrame("Unit2, Lab17");
-//       frame.setSize(408, 438);    //makes the mouse location correct
-//       frame.setLocation(0, 0);
-//       frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//       PrizePanel p = new PrizePanel();
-//       frame.setContentPane(p);
-//       frame.setVisible(true);
-//       p.requestFocus();  //  new command to make the computer pay attention to the key presses.
-//    }
-   
-  /**************************************************************************************
-Copy all other files from Lab16.  Use the code in the packet as a model so that the arrow keys 
-move the polkadot ten pixels at a time.  Do not allow the keys to move the polkadot 
-outside the boundaries of the panel.
-*************************************************************************************/
-        //Name:Addison Sharp    Date:7/1/20
-
-/******************************************************************************
-Copy all files from Lab12.  Rename the driver as Lab16.  Set the JFrame's size 
-to (408, 438), which makes the mouse's location in the JFrame correspond to its 
-location in the JPanel.  Then add the new code from the packet to PrizePanel.   
-
-The mousePressed method must perform three different behaviors on MouseEvent e:
-
-left click           <none>	            moves the polkadot to where you clicked
-right click	         e.isMetaDown()       moves the ball to where you clicked
-Shift + left click	e.isShiftDown()	   randomly changes the speed and direction of the ball
-****************************************************************************************/
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
